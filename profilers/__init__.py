@@ -3,12 +3,12 @@
 import time
 import yappi as profiler_yappi
 import cProfile as cprofile_profiler
-import line_profiler
 import memory_profiler
 from functools import partial
 from pycallgraph import PyCallGraph
 from pycallgraph.output import GraphvizOutput
 from subprocess import call
+import six
 
 
 BLANK_LINES_COUNT = 3
@@ -21,20 +21,20 @@ CALL_TREE_IMG_FILENAME = 'pycallgraph.png'
 
 
 def _print_results(result_func_or_str, profiled_func, type):
-    print BLANK_LINES
-    print DELIMETER
-    print '{}-PROFILING of {}.{}(*args, **kwargs)'.format(
+    six.print_(BLANK_LINES)
+    six.print_(DELIMETER)
+    six.print_('{}-PROFILING of {}.{}(*args, **kwargs)'.format(
         type,
         profiled_func.__module__,
         profiled_func.__name__
-    )
-    print DELIMETER
+    ))
+    six.print_(DELIMETER)
     if callable(result_func_or_str):
         result_func_or_str()
     else:
-        print result_func_or_str
-    print DELIMETER
-    print BLANK_LINES
+        six.print_(result_func_or_str)
+    six.print_(DELIMETER)
+    six.print_(BLANK_LINES)
 
 
 def simple_time(func):
@@ -91,17 +91,20 @@ def cprofile_dump(func):
     return _wrapper
 
 
-def line(func):
+if six.PY2:
+    import line_profiler
+    
+    def line(func):
 
-    def _wrapper(*args, **kwargs):
-        profiler = line_profiler.LineProfiler()
-        result = profiler(func)(*args, **kwargs)
+        def _wrapper(*args, **kwargs):
+            profiler = line_profiler.LineProfiler()
+            result = profiler(func)(*args, **kwargs)
 
-        _print_results(profiler.print_stats, func, 'line')
+            _print_results(profiler.print_stats, func, 'line')
 
-        return result
+            return result
 
-    return _wrapper
+        return _wrapper
 
 
 def memory(func):
