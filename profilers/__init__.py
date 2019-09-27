@@ -7,7 +7,7 @@ import memory_profiler
 from functools import partial
 from pycallgraph import PyCallGraph
 from pycallgraph.output import GraphvizOutput
-from subprocess import call
+from subprocess import call, check_call
 import six
 
 
@@ -17,7 +17,7 @@ DELIMETER_LENGTH = 80
 DELIMETER_UNIT = '*'
 DELIMETER = DELIMETER_LENGTH * DELIMETER_UNIT
 PROF_FILENAME = 'cprofile.prof'
-CALL_TREE_IMG_FILENAME = 'pycallgraph.png'
+CALL_TREE_IMG_FILENAME = 'calltree.png'
 
 
 def _print_results(result_func_or_str, profiled_func, type):
@@ -93,7 +93,7 @@ def cprofile_dump(func):
 
 if six.PY2:
     import line_profiler
-    
+
     def line(func):
 
         def _wrapper(*args, **kwargs):
@@ -147,6 +147,26 @@ def calltree(func):
         with PyCallGraph(output=GraphvizOutput()):
             result = func(*args, **kwargs)
             call(['open', CALL_TREE_IMG_FILENAME])
+        return result
+
+    return _wrapper
+
+
+def gprof2dot(func):
+
+    def _wrapper(*args, **kwargs):
+        profiler = cprofile_profiler.Profile()
+        result = profiler.runcall(func, *args, **kwargs)
+        profiler.dump_stats(PROF_FILENAME)
+        stri = 'python{} -m gprof2dot -f pstats {} | dot -Tpng -o {}'.format(
+            '' if six.PY2 else '3',
+            PROF_FILENAME,
+            CALL_TREE_IMG_FILENAME
+        )
+        print(stri)
+        check_call(stri, shell=True)
+        call(['open', CALL_TREE_IMG_FILENAME])
+
         return result
 
     return _wrapper

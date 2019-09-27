@@ -8,6 +8,7 @@
 * memory
 * timeit
 * calltree
+* gprof2dot
 * grind
 
 Installing:
@@ -22,6 +23,6 @@ Using:
 import profilers
 
 @profilers.calltree
-def abc():
+def some_f():
     pass
 ```
